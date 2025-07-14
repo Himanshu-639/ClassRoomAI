@@ -46,35 +46,3 @@ def get_joined_subjects(user_email):
     user_data = db.child("users").child(user_key).get().val()
     return user_data.get("joined_subjects", []) if user_data else []
 
-
-
-def ensure_subject_access(subject, user_email):
-    joined_subjects = get_joined_subjects(user_email)
-    if subject not in joined_subjects:
-        return False, joined_subjects
-    return True, joined_subjects
-
-def save_note_metadata(subject, user_email, note_data, is_private=False):
-    """
-    Save note metadata (title, summary, etc.) under global or private notes in Firebase
-    """
-    user_key = user_email.replace(".", "_")
-    note_section = "private_notes" if is_private else "global_notes"
-    
-    db.child("subjects").child(subject).child("private_notes").child(user_key).push(note_data)
-
-def fetch_notes(subject, is_private=False, user_email=None):
-    """
-    Fetch all notes for a subject. If private, filter by user.
-    """
-    note_section = "private_notes" if is_private else "global_notes"
-    notes = db.child("subjects").child(subject).child(note_section).get().val()
-
-    if not notes:
-        return []
-
-    if is_private and user_email:
-        user_key = user_email.replace(".", "_")
-        return [note for note in notes.values() if note.get("owner") == user_key]
-
-    return list(notes.values())
