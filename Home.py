@@ -24,15 +24,29 @@ def render_auth_ui():
     if auth_mode == "SignUp":
         if st.button("Create Account"):
             try:
-                auth.create_user_with_email_and_password(email, password)
-                st.success("✅ Account created successfully! You can now log in.")
+                user = auth.create_user_with_email_and_password(email, password)
             except Exception as e:
                 st.error(f"Signup error : {e}")
+            else:
+                try:
+                    auth.send_email_verification(user['idToken'])
+                    st.success("✅ Account created! A verification email has been sent. Please verify your email before logging in.")
+                except Exception as e:
+                    st.warning("Account created but failed to send verification email.")
+                    st.error(f"Email verification error: {e}")
 
     elif auth_mode == "LogIn":
         if st.button("Log In"):
             try:
                 user = auth.sign_in_with_email_and_password(email, password)
+                user_info = auth.get_account_info(user['idToken'])
+                email_verified = user_info['users'][0]['emailVerified']
+
+                if not email_verified:
+                    st.warning("⚠️ Email not verified. Please check your inbox.")
+                    st.stop()
+
+                # Continue login if verified
                 st.session_state.logged_in = True
                 st.session_state.user_email = email
                 st.session_state.id_token = user["idToken"]
@@ -40,6 +54,7 @@ def render_auth_ui():
                 init_user_node(email)
                 st.success("✅ Login successful!")
                 st.rerun()
+
             except Exception as e:
                 st.error(f"Login Error : {e}")
 
