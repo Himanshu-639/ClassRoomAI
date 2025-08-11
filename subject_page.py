@@ -9,7 +9,7 @@ def render_subject_page(subject):
     st.title(subject)
 
     email = st.session_state.user_email
-    joined_subjects = get_joined_subjects(email)
+    joined_subjects = get_joined_subjects(email, st.session_state.id_token)
 
     if subject not in joined_subjects:
         st.error("🚫 Access denied: You haven't joined this class.")
@@ -25,7 +25,7 @@ def render_subject_page(subject):
     with tabs[0]:
         try:
             user_key = email.replace(".", "_")
-            notes = db.child("subjects").child(subject).child("global_notes").get()
+            notes = db.child("subjects").child(subject).child("global_notes").get(st.session_state.id_token)
             if notes.each():
                 for item in notes.each():
                     note = item.val()
@@ -130,7 +130,7 @@ def render_subject_page(subject):
                         "timestamp": time.time()
                     }
 
-                    db.child("subjects").child(subject).child("global_notes").push(note_data)
+                    db.child("subjects").child(subject).child("global_notes").push(note_data, st.session_state.id_token)
                     st.success("Note Submitted")
                     st.session_state.show_input_box_global = False
                     st.rerun()
@@ -143,7 +143,7 @@ def render_subject_page(subject):
     with tabs[1]:
         try:
             user_key = email.replace(".", "_")
-            notes = db.child("subjects").child(subject).child("private_notes").child(user_key).get()
+            notes = db.child("subjects").child(subject).child("private_notes").child(user_key).get(st.session_state.id_token)
             if notes.each():
                 for item in notes.each():
                     note = item.val()
@@ -254,7 +254,7 @@ def render_subject_page(subject):
                         "timestamp": time.time()
                     }
 
-                    db.child("subjects").child(subject).child("private_notes").child(user_key).push(note_data)
+                    db.child("subjects").child(subject).child("private_notes").child(user_key).push(note_data, st.session_state.id_token)
                     st.success("Note Submitted")
                     st.session_state.show_input_box_private = False
                     st.rerun()

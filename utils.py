@@ -21,28 +21,28 @@ def get_user_key(email: str) -> str:
     """Convert user email to a valid Firebase key."""
     return email.replace(".", "_")
 
-def get_available_subjects():
+def get_available_subjects(id_token):
     """Fetch list of available subjects from Firebase Realtime DB."""
-    subjects_node = db.child("subjects").shallow().get()
+    subjects_node = db.child("subjects").shallow().get(id_token)
     return list(subjects_node.val()) if subjects_node.val() else []
 
-def join_subject(subject, email, joined_subjects):
+def join_subject(subject, email, joined_subjects, id_token):
     """Adds a subject to the user's joined subjects in the database, avoiding duplicates."""
     user_key = email.replace(".", "_")
     if subject not in joined_subjects:
         joined_subjects.append(subject)
-        db.child("users").child(user_key).update({"joined_subjects": joined_subjects})
+        db.child("users").child(user_key).update({"joined_subjects": joined_subjects}, id_token)
 
-def init_user_node(email):
+def init_user_node(email, id_token):
     """Ensures a user node exists in the database with default values."""
     user_key = email.replace(".", "_")
-    existing = db.child("users").child(user_key).get().val()
+    existing = db.child("users").child(user_key).get(id_token).val()
     if not existing:
-        db.child("users").child(user_key).set({"joined_subjects": []})
+        db.child("users").child(user_key).set({"joined_subjects": []}, id_token)
 
 
-def get_joined_subjects(user_email):
+def get_joined_subjects(user_email, id_token):
     user_key = user_email.replace(".", "_")
-    user_data = db.child("users").child(user_key).get().val()
+    user_data = db.child("users").child(user_key).get(id_token).val()
     return user_data.get("joined_subjects", []) if user_data else []
 

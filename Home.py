@@ -51,7 +51,7 @@ def render_auth_ui():
                 st.session_state.user_email = email
                 st.session_state.id_token = user["idToken"]
                 st.session_state.refresh_token = user["refreshToken"]
-                init_user_node(email)
+                init_user_node(email, user["idToken"])
                 st.success("✅ Login successful!")
                 st.rerun()
 
@@ -62,7 +62,7 @@ def render_auth_ui():
 def render_sidebar():
     st.sidebar.header("📚 Your Subjects")
     try:
-        joined_subjects = get_joined_subjects(st.session_state.user_email)
+        joined_subjects = get_joined_subjects(st.session_state.user_email, st.session_state.id_token)
         if joined_subjects:
             subject_files = {subj: f"pages/_{subj}.py" for subj in joined_subjects}
 
@@ -79,18 +79,18 @@ def render_sidebar():
 def render_join_class():
     st.subheader("Join a Class")
     try:
-        subject_list = get_available_subjects()
+        subject_list = get_available_subjects(st.session_state.id_token)
         if not subject_list:
             st.info("No subjects available. Please add subjects in Firebase.")
         else:
             selected_subject = st.selectbox("Available Subjects", subject_list, index=None, placeholder="Select a Subject")
             if selected_subject:
-                joined_subjects = get_joined_subjects(st.session_state.user_email)
+                joined_subjects = get_joined_subjects(st.session_state.user_email, st.session_state.id_token)
                 if selected_subject in joined_subjects:
                     st.info(f"✅ You have already joined {selected_subject}")
                 else:
                     if st.button("Join Selected Subject"):
-                        join_subject(selected_subject, st.session_state.user_email, joined_subjects)
+                        join_subject(selected_subject, st.session_state.user_email, joined_subjects, st.session_state.id_token)
                         st.success(f"✅ Joined {selected_subject}")
                         st.rerun()
     except Exception as e:
